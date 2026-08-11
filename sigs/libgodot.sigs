@@ -1,0 +1,30 @@
+# The Godot C ABI that the tool edge calls.
+#
+# Fed to fabric-harness/thirdparty/generate_stubs/generate_stubs.py, which emits a
+# dlsym-backed dispatch table. So there is no -lgodot at link time and no Godot headers at
+# build time. The edge builds on a machine that has never seen Godot, and it fails at start
+# with a named symbol rather than failing to link.
+#
+# This is the decision fabric-harness already made for iceoryx2, applied again. iceoryx2 is
+# Rust and weft writes none; Godot is a 14000 file engine and weft builds none of it. In both
+# cases the artifact stays out of weft's build graph.
+#
+# Format: one C declaration per line. A comment starts with '#'.
+#
+# libgodot exposes the GDExtension interface, so these are the entry point and the interface
+# getter. Everything else is reached through the function pointers that getter returns, which
+# is why this list is short and will stay short.
+
+# Entry point. Creates an engine instance the process owns.
+GDExtensionObjectPtr libgodot_create_godot_instance(int argc, char *argv[], GDExtensionInitializationFunction init_func, void *platform_data);
+void libgodot_destroy_godot_instance(GDExtensionObjectPtr instance);
+
+# The interface table. Every other call goes through what this returns, so the ABI surface
+# the edge pins is this one function and not the whole engine.
+GDExtensionInterfaceFunctionPtr godot_get_proc_address(const char *p_function_name);
+
+# Running the instance. A tool call drives frames itself rather than entering a main loop,
+# because an edge has no tick of its own.
+GDExtensionBool libgodot_start(GDExtensionObjectPtr instance);
+GDExtensionBool libgodot_iteration(GDExtensionObjectPtr instance);
+void libgodot_stop(GDExtensionObjectPtr instance);
