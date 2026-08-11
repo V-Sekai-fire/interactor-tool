@@ -14,6 +14,34 @@ a mesh, a motion, or a stage: `100STYLE` alone unpacks to 3.2 GB, and a single g
 is a megabyte. Over HTTP each call is a serialise, a copy, and a parse. Over the bus the
 caller writes the bytes once and the tool reads the same bytes.
 
+## Cheap here, nasty there
+
+`wire.md` holds the entity packet, which is bitpacked to 22 bytes a body a frame because at
+60 Hz across a venue every byte is multiplied by tens of thousands. That is the nasty
+protocol, and it earns its nastiness.
+
+**A tool call is the opposite shape.** It happens seconds apart, not sixty times a second, and
+it carries megabytes. A generated clip is about a megabyte, a prop stage is kilobytes, and
+100STYLE unpacks to 3.2 GB. Bitpacking the framing around a payload like that saves bytes
+nobody can measure and costs the thing that actually matters here, which is being able to read
+a call and see what it asked for.
+
+So the framing is **CBOR**: the JSON data model MCP already speaks, in a binary encoding, with
+no text parsing and no schema to agree in advance. Schemas and provenance stay **JSON**, and
+**JSON-LD** where a term needs to mean the same thing in two places.
+
+That last part is not decoration. This project has a licence rule with eleven blocked sources
+and a per-item route that records who read the terms, and a prop carries a support height that
+means a specific thing. Those are vocabulary, and a vocabulary that is written down once and
+referenced is the difference between a corpus that can be audited and a directory of files.
+
+| | entity packet | tool call |
+| --- | --- | --- |
+| rate | 60 Hz per body | seconds apart |
+| size | 22 bytes | kilobytes to megabytes |
+| encoding | bitpacked | CBOR |
+| what it optimises | bytes on the wire | being able to tell what happened |
+
 ## The rule a tool obeys
 
 **A tool is stateless between calls.** It takes arguments, does work, writes a file, and
