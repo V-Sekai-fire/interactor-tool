@@ -3,6 +3,17 @@
 A tool is a name, a JSON schema, and a function. Adding one is a row here and a function in
 `src/`, not a repository and not a deploy.
 
+## The transport
+
+MCP frames go over iceoryx2, not over a socket. The protocol is JSON-RPC and does not care,
+and this keeps the plane free of networking, which is what makes it a plane rather than an
+edge.
+
+The payloads are the reason it is worth doing rather than a technicality. A tool call carries
+a mesh, a motion, or a stage: `100STYLE` alone unpacks to 3.2 GB, and a single generated clip
+is a megabyte. Over HTTP each call is a serialise, a copy, and a parse. Over the bus the
+caller writes the bytes once and the tool reads the same bytes.
+
 ## The rule a tool obeys
 
 **A tool is stateless between calls.** It takes arguments, does work, writes a file, and
