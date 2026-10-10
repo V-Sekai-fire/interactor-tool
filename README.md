@@ -12,4 +12,4 @@ There is nothing to build yet: the repository holds the design and the signature
 
 ## Licence
 
-The licence is not stated.
+MIT. See [LICENSE](LICENSE).
